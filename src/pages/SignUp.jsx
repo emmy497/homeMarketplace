@@ -6,6 +6,7 @@ import {db} from "../firebase.config"
 import visibilityIcon from "../assets/svg/visibilityIcon.svg";
 import {setDoc, doc, serverTimestamp} from "firebase/firestore"
 import { toast } from "react-toastify";
+import OAuth from "../components/OAuth";
 
 function SignUp() {
   const [showPassword, setShowPassword] = useState(false);
@@ -90,9 +91,7 @@ function SignUp() {
               />
             </div>
 
-            <Link to="/forgot-password" className="forgotPasswordLink">
-              Forgot Password
-            </Link>
+  
 
             <div className="signUpBar">
               <p className="signUpText">Sign Up</p>
@@ -101,11 +100,13 @@ function SignUp() {
               </button>
             </div>
           </form>
-
-          {/* Google OAuth */}
-          <Link to="/sign-in" className="registerLink">
+          <div className="links">
+            <Link to="/sign-in" className="registerLink">
             Sign In Instead
           </Link>
+            </div>
+          <OAuth/>
+   
         </header>
       </div>
     </>

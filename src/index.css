@@ -215,7 +215,7 @@ button {
   cursor: pointer;
   color: #00cc66;
   font-weight: 600;
-  text-align: right;
+  
 }
 
 .signInBar,
@@ -288,12 +288,26 @@ button {
   width: 100%;
 }
 
-.registerLink {
-  margin-top: 4rem;
+.links{
+  display: flex;
+}
+
+.links a{
+  margin-right: 20px;
+}
+
+
+.registerlink {
+  cursor: pointer;
   color: #00cc66;
   font-weight: 600;
-  text-align: center;
-  margin-bottom: 3rem;
+
+}
+.registerLink {
+  cursor: pointer;
+  color: #00cc66;
+  font-weight: 600;
+
 }
 
 @media (min-width: 1217px) {
