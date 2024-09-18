@@ -13,6 +13,7 @@ import {
 import { db } from "../firebase.config";
 import { toast } from "react-toastify";
 import Spinner from "../components/Spinner";
+import ListingItem from "../components/ListingItem";
 
 function Category() {
   const [listings, setListings] = useState(null);
@@ -38,19 +39,57 @@ function Category() {
         );
 
         //Execute query
-        const querySnap = await getDocs(q)
+        const querySnap = await getDocs(q);
 
-        let listings = []
+        const listings = [];
 
-        QuerySnapshot.forEach((doc) => {
-          console.log(doc.data())
-        })
-      } catch (error) {}
+        querySnap.forEach((doc) => {
+          return listings.push({
+            id: doc.id,
+            data: doc.data(),
+          });
+        });
+
+        setListings(listings);
+        setLoadng(false);
+      } catch (error) {
+        toast.error("Could not fetch Listings");
+      }
     };
 
     fetchListings();
-  });
-  return <div>Category</div>;
+  }, [params.categoryName]);
+  return (
+    <div className="category">
+      <header>
+        <p className="pageHeader">
+          {params.categoryName === "rent"
+            ? "PLaces for rent"
+            : "Places for sale"}
+        </p>
+      </header>
+
+      {loading ? (
+        <Spinner />
+      ) : listings && listings.length > 0 ? (
+        <>
+          <main>
+            <ul className="categoryListings">
+              {listings.map((listing) => (
+                <ListingItem
+                  listing={listing.data}
+                  id={listing.id}
+                  key={listing.id}
+                />
+              ))}
+            </ul>
+          </main>
+        </>
+      ) : (
+        <p>No listings for {params.categoryName}</p>
+      )}
+    </div>
+  );
 }
 
 export default Category;
