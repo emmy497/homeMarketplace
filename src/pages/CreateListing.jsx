@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { useNavigate } from "react-router-dom";
 import Spinner from "../components/Spinner";
+import { toast } from "react-toastify";
 
 function CreateListing() {
   const [geolocationEnabled, setGeoLocationEnabled] = useState(true);
@@ -62,12 +63,83 @@ function CreateListing() {
     //eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isMounted]);
 
-  const onSubmit = (e) => {
+  const onSubmit = async (e) => {
     e.preventDefault();
+
+    setLoading(true);
+    if (discountedPrice >= regularPrice) {
+      setLoading(false);
+      toast.error("Discounted price needs to be less than regular price");
+      return;
+    }
+
+    if (images.length > 6) {
+      setLoading(false);
+      toast.error("Max 6 images");
+      return;
+    }
+
+    let geolocation = {};
+    let location;
+
+    if (geolocationEnabled) {
+      const response = await fetch(
+        `https://api.distancematrix.ai/maps/api/geocode/json?address=${address}&key=${process.env.REACT_APP_GEOCODE_API_KEY}`
+      );
+
+      const data = await response.json();
+
+      console.log(data);
+
+      geolocation.lat = data.result[0].geometry.location.lat ?? 0;
+      geolocation.lng = data.result[0].geometry.location.lng ?? 0;
+
+      location =
+        data.result[0].address_components === null
+          ? undefined
+          : data.result[0]?.formatted_address;
+
+        if(location === undefined || location.includes("undefined") ){
+             setLoading(false)
+             toast.error("Please enter a correct address")
+             return
+        }
+    } else {
+      geolocation.lat = latitude;
+      geolocation.lng = longitude;
+      location = address;
+      
+    }
+
+    setLoading(false);
   };
 
   const onMutate = (e) => {
-    
+    let boolean = null;
+
+    if (e.target.value === "true") {
+      boolean = true;
+    }
+
+    if (e.target.value === "false") {
+      boolean = false;
+    }
+
+    //Files
+    if (e.target.files) {
+      setFormData((prevState) => ({
+        ...prevState,
+        images: e.target.files,
+      }));
+    }
+
+    //Text/Boleans/Numbers
+    if (!e.target.files) {
+      setFormData((prevState) => ({
+        ...prevState,
+        [e.target.id]: boolean ?? e.target.value,
+      }));
+    }
   };
 
   if (loading) {
@@ -184,7 +256,7 @@ function CreateListing() {
             </button>
             <button
               className={
-                !parking && furnished !== null
+                !furnished && furnished !== null
                   ? "formButtonActive"
                   : "formButton"
               }
@@ -234,78 +306,79 @@ function CreateListing() {
             </div>
           )}
 
-       
+          <label className="formLabel">Offer</label>
+          <div className="formButtons">
+            <button
+              className={offer ? "formButtonActive" : "formButton"}
+              type="button"
+              id="offer"
+              value={true}
+              onClick={onMutate}
+              min="1"
+              max="50"
+            >
+              Yes
+            </button>
+            <button
+              className={
+                !offer && offer !== null ? "formButtonActive" : "formButton"
+              }
+              type="button"
+              id="offer"
+              value={false}
+              onClick={onMutate}
+            >
+              No
+            </button>
+          </div>
 
-        <label className="formLabel">Offer</label>
-        <div className="formButtons">
-          <button
-            className={offer ? "formButtonActive" : "formButton"}
-            type="button"
-            id="offer"
-            value={true}
-            onClick={onMutate}
-            min="1"
-            max="50"
-          >
-            Yes
-          </button>
-          <button
-            className={
-              !offer && offer !== null ? "formButtonActive" : "formButton"
-            }
-            type="button"
-            id="furnished"
-            value={false}
-            onClick={onMutate}
-          >
-            No
-          </button>
-        </div>
+          <label className="formLabel">Regular Price</label>
+          <div className="formPriceDiv">
+            <input
+              className="formInputSmall"
+              type="number"
+              id="regularPrice"
+              value={regularPrice}
+              onChange={onMutate}
+              min="50"
+              max="750000000"
+              required
+            />
+            {type === "rent" && <p className="formPriceText">$ / Month</p>}
+          </div>
 
-        <label className="formLabel">Regular Price</label>
-        <div className="formPriceDiv">
+          {offer && (
+            <input
+              className="formInputSmall"
+              type="number"
+              id="dicountedPrice"
+              value={regularPrice}
+              onChange={onMutate}
+              min="50"
+              max="750000000"
+              required={offer}
+            />
+          )}
+
+          <label className="formLabel">Images</label>
+          <p className="imagesInfo">
+            The first image will be the cover (max 6).
+          </p>
           <input
-            className="formInputSmall"
-            type="number"
-            id="regularPrice"
-            value={regularPrice}
+            type="file"
+            className="formInputFile"
+            id="images"
             onChange={onMutate}
-            min="50"
-            max="750000000"
+            max="6"
+            accept=".jpg,.png,.jpeg"
+            multiple
             required
           />
-          {type === "rent" && <p className="formPriceText">$ / Month</p>}
-        </div>
-
-        {offer && (
-          <input
-            className="formInputSmall"
-            type="number"
-            id="dicountedPrice"
-            value={regularPrice}
-            onChange={onMutate}
-            min="50"
-            max="750000000"
-            required={offer}
-          />
-        )}
-
-        <label className="formLabel">Images</label>
-        <p className="imagesInfo">The first image will be the cover (max 6).</p>
-        <input
-          type="file"
-          className="formInputFile"
-          id="images"
-          onChange={onMutate}
-          max="6"
-          accept=".jpg,.png,.jpeg"
-          multiple
-          required
-        />
-        <button className="primaryButton createListingButton" type="submit">Create Listing</button>
-          </form>
+          <button className="primaryButton createListingButton" type="submit">
+            Create Listing
+          </button>
+        </form>
       </main>
-    
     </div>
   );
 }
